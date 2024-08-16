@@ -3,6 +3,11 @@
 # dependencies
 node_modules/
 
+# Builds
+
+ios/
+android/
+
 # Expo
 .expo/
 dist/
@@ -39,3 +44,4 @@ yarn-error.*
 
 expo-env.d.ts
 # @end expo-cli
+
