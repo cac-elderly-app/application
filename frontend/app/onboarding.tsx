@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { Text, SafeAreaView, View, StyleSheet, TouchableOpacity } from "react-native";
 // import { IconApps } from "@tabler/icons-react-native"
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -16,11 +16,28 @@ import * as Haptics from 'expo-haptics';
 import { Link } from 'expo-router';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import supabase from '@/supabase';
 
 const Onboarding = () => {
     const bottomSheetRef = useRef<BottomSheet>(null);
 
     const [popupActive, setPopupActive] = useState<boolean>(false);
+
+      useEffect(() => {
+        const checkUserSession = async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            console.log('User is logged in:', session);
+            console.log("redirecting")
+          router.replace('/dashboard')
+          } else {
+            console.log('No active session found');
+            // Redirect to signup/login screen
+          }
+        };
+    
+        checkUserSession();
+      }, []);
 
     const handleSheetChanges = useCallback((index: number) => {
         console.log('handleSheetChanges', index);

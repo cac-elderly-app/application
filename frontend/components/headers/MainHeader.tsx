@@ -44,13 +44,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'semibold',
     color: '#000', 
-    opacity: 0.5
+    opacity: 0.5,
+    textAlign: 'center'
   },
   headerTitleContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: -110
+    width: 10,
+    // backgroundColor: 'green',
+    padding: 0,
+    marginLeft: -30,
   },
 });
 
