@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, SafeAreaView, Text, StyleSheet, TextInput, TouchableOpacity, Linking, Alert  } from "react-native";
 import MainHeaderBar from "@/components/headers/MainHeader";
 import { StatusBar } from "expo-status-bar";
@@ -6,8 +6,16 @@ import * as Haptics from "expo-haptics"
 // import * as Permissions from "expo-permissions"
 import * as Notifications from 'expo-notifications';
 import Toast from 'react-native-root-toast';
+import { useRouter } from "expo-router";
+import supabase from "@/supabase";
+import { Redirect } from "expo-router";
 
 const Signup = () => {
+    const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
     const notificationPerms = async() => {
         const settings = await Notifications.getPermissionsAsync();
   return (
@@ -25,6 +33,83 @@ const Signup = () => {
             },
           });
       }
+
+      const router = useRouter();
+
+      useEffect(() => {
+        const checkUserSession = async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            console.log('User is logged in:', session);
+            console.log("redirecting")
+          router.replace('/dashboard')
+          } else {
+            console.log('No active session found');
+            // Redirect to signup/login screen
+          }
+        };
+    
+        checkUserSession();
+      }, []);
+
+      const handleSignup = async () => {
+        // Check password match
+        if (password !== confirmPassword) {
+          Alert.alert('Error', 'Passwords do not match');
+          return;
+        }
+    
+        try {
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+          });
+
+          console.log("DATA: ", data);
+
+          const user = data;
+    
+          if (error) {
+            console.log("\n\nERROR FOUND: ", error, "\n")
+            // throw error;
+          }
+
+          if (user) {
+          }
+    
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert([
+              { 
+                full_name: `${firstName} ${lastName}`, 
+                id: user.user!.id,
+                email: email,
+                hash_pass: password
+              }
+            ]);
+    
+          if (insertError) {
+            console.log("INSERT ERROR: ", insertError, "CODE: ", insertError.code);
+            console.log("now throwing")
+            throw insertError;
+          }
+    
+          Toast.show('Account created successfully!', {
+            duration: Toast.durations.LONG,
+          });
+
+          router.replace('/dashboard');
+    
+        } catch (error: any) {
+          console.log('\n\nError creating account:', error.message);
+          Alert.alert('Error', error.message);
+        }
+      };
+
+      useEffect(() => {
+        console.log("Hello World");
+        // console.log("Supabase: ", supabase);
+      }, [])
     return (
         <>
         <MainHeaderBar />
@@ -54,11 +139,21 @@ const Signup = () => {
                 paddingVertical: 20,
                 gap: 20
             }}>
-                <TextInput clearButtonMode='while-editing' placeholder="First Name" style={styles.input} />
-                <TextInput  clearButtonMode='while-editing' placeholder="Last Name" style={styles.input} />
-                <TextInput keyboardType='email-address'  clearButtonMode='while-editing' placeholder="Email" style={styles.input} />
-                <TextInput secureTextEntry placeholder="Password" style={styles.input} />
-                <TextInput secureTextEntry placeholder="Confirm Password" style={styles.input} />
+                <TextInput clearButtonMode='while-editing' placeholder="First Name" style={styles.input} 
+                onChangeText={setFirstName} 
+                />
+                <TextInput  clearButtonMode='while-editing' placeholder="Last Name" style={styles.input}
+                 onChangeText={setLastName}
+                 />
+                <TextInput keyboardType='email-address'  clearButtonMode='while-editing' placeholder="Email" style={styles.input} 
+                onChangeText={setEmail} 
+                />
+                <TextInput secureTextEntry placeholder="Password" style={styles.input} 
+                onChangeText={setPassword} 
+                />
+                <TextInput secureTextEntry placeholder="Confirm Password" style={styles.input}
+                onChangeText={setConfirmPassword} 
+                 />
 
                 <Text style={{ marginTop: 35, textAlign: 'center', color: 'rgba(0, 0, 0, 0.3)' }}>By authenticating, you agree to the <Text style={{ color: "#2b63e1", opacity: 1, fontWeight: '400' }}>Privacy Policy</Text>.</Text>
 
@@ -123,6 +218,7 @@ const Signup = () => {
                             Haptics.notificationAsync(
                                 Haptics.NotificationFeedbackType.Success
                             );
+                            handleSignup();
                         }}
                         >
                             {/* <Link href="/signup"> */}
